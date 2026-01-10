@@ -1,6 +1,8 @@
-from typing import List, Dict, Any
+import json
+import uuid
+from typing import List, Dict, Any, cast
 from src.llm_client import LLMClient
-from src.models import Question
+from src.models import MCQQuestion, Question, QuestionType
 
 
 class QuestionGenerator:
@@ -21,6 +23,30 @@ class QuestionGenerator:
 
         prompt = f"Generate {count} high-quality questions about '{topic}'. Include a mix of MCQ and freeform."
 
-        # Logic for parsing will be implemented in the next subtasks
-        _ = self.llm_client.generate_response(prompt, system_instruction)
-        return []
+        response_text = self.llm_client.generate_response(prompt, system_instruction)
+        return QuestionGenerator._parse_llm_response(response_text, topic)
+
+    @staticmethod  # Independent utility method, no access to self or cls
+    def _parse_llm_response(response_text: str, topic: str) -> List[Question]:
+        """Parse the raw LLM string and handle MCQ object creation."""
+        try:
+            # Cleaning potential Markdown code blocks
+            clean_json = response_text.strip().replace("```json", "").replace("```", "")
+            data: List[Dict[str, Any]] = json.loads(clean_json)
+
+            questions: List[Question] = []
+            for item in data:
+                question_id = str(uuid.uuid4())[:8] # UUID v4
+                q_type = item.get("type")
+
+                if q_type == QuestionType.MCQ.value:
+                    questions.append(MCQQuestion(
+                        question_id=question_id,
+                        topic=topic,
+                        text=str(item.get("text", "")),
+                        correct_answer=str(item.get("correct_answer", "")),
+                        options=cast(List[str], item.get("options", []))
+                    ))
+            return questions
+        except (json.JSONDecodeError, TypeError):
+            return []
