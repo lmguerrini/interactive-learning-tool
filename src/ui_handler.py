@@ -42,6 +42,16 @@ class UIHandler:
         return input("\nEnter the topic you want to study: ").strip()
 
     @staticmethod
+    def get_question_id_input() -> str:
+        """Prompt the user for a question ID to manage."""
+        return input("\nEnter the ID of the question you want to enable/disable: ").strip()
+
+    @staticmethod
+    def show_not_found(question_id: str) -> None:
+        """Inform the user that a question ID was not found."""
+        print(f"\nError: Question with ID '{question_id}' not found.")
+
+    @staticmethod
     def display_statistics(questions: List[Question]) -> None:
         """Display a detailed table of all questions and their performance stats."""
         if not questions:
