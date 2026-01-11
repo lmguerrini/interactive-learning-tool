@@ -68,3 +68,9 @@ class QuizManager:
         )
 
         return self.llm_client.generate_response(prompt, system_instruction)
+
+    @staticmethod
+    def is_llm_judgment_correct(llm_response: str) -> bool:
+        """Parse the LLM response to determine the final judgment."""
+        # Simple string check: looking for 'Judgment: Correct' in the response
+        return "judgment: correct" in llm_response.lower()
