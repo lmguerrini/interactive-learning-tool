@@ -1,5 +1,5 @@
 from typing import List, Optional
-from src.models import Question
+from src.models import Question, MCQQuestion
 import random
 from src.repository import QuestionRepository
 from src.llm_client import LLMClient
@@ -74,3 +74,8 @@ class QuizManager:
         """Parse the LLM response to determine the final judgment."""
         # Simple string check: looking for 'Judgment: Correct' in the response
         return "judgment: correct" in llm_response.lower()
+
+    @staticmethod
+    def evaluate_mcq(question: MCQQuestion, user_choice: str) -> bool:
+        """Directly compare the user's choice with the stored correct answer."""
+        return user_choice.strip().lower() == question.correct_answer.strip().lower()
