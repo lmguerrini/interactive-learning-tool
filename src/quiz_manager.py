@@ -79,3 +79,10 @@ class QuizManager:
     def evaluate_mcq(question: MCQQuestion, user_choice: str) -> bool:
         """Directly compare the user's choice with the stored correct answer."""
         return user_choice.strip().lower() == question.correct_answer.strip().lower()
+
+    def update_question_stats(self, question: Question, is_correct: bool) -> None:
+        """Update the statistics for a specific question and persist changes."""
+        question.times_shown += 1 # Every time the user answers
+        if is_correct:
+            question.correct_count += 1
+        self.save_changes()
