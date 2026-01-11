@@ -1,40 +1,105 @@
+import sys
 from src.llm_client import LLMClient
 from src.question_generator import QuestionGenerator
 from src.repository import QuestionRepository
 from src.ui_handler import UIHandler
+from src.quiz_manager import QuizManager
+from src.models import MCQQuestion
 
 
 def main() -> None:
-    """Main entry point for the question generation flow."""
+    """Main entry point for the Interactive Learning Tool."""
 
-    # Instantiate core objects from their classes to set up the application
+    # Initialization of core components
     llm_client = LLMClient() # Interact with OpenAI
-    generator = QuestionGenerator(llm_client) # Generate questions via LLM
     repository = QuestionRepository() # Save and load questions from JSON files
+    quiz_manager = QuizManager(repository, llm_client) # Handle quiz logic and evaluation
+    generator = QuestionGenerator(llm_client) # Generate questions via LLM
     ui = UIHandler() # Manage user input/output
 
-    # Flow
-    topic = ui.get_topic_input()
-    if not topic:
-        print("Topic cannot be empty.")
-        return
+    while True:
+        print("\n" + "=" * 40)
+        print("   INTERACTIVE LEARNING TOOL")
+        print("=" * 40)
+        print("1. Generate Questions (LLM)")
+        print("2. Statistics Viewing")
+        print("3. Practice Mode")
+        print("4. Test Mode")
+        print("5. Manage Questions (Enable/Disable)")
+        print("6. Exit")
 
-    print(f"Generating questions for: {topic}...")
-    raw_questions = generator.generate_questions(topic, count=3)
+        choice = input("\nSelect a mode [1-6]: ").strip()
 
-    if not raw_questions:
-        print("Failed to generate questions. Please check your API key or connection.")
-        return
+        if choice == '1':
+            topic = ui.get_topic_input()
+            if topic:
+                raw_qs = generator.generate_questions(topic, count=3)
+                accepted = ui.validate_generated_questions(raw_qs)
+                if accepted:
+                    quiz_manager.questions.extend(accepted)
+                    quiz_manager.save_changes()
 
-    accepted = ui.validate_generated_questions(raw_questions)
+        elif choice == '2':
+            ui.display_statistics(quiz_manager.questions)
 
-    if accepted:
-        current_questions = repository.load_all()
-        current_questions.extend(accepted) # Add new questions without overwriting existing ones
-        repository.save_all(current_questions)
-        print(f"\nSuccessfully saved {len(accepted)} questions to data/questions.json")
-    else:
-        print("\nNo questions were saved.")
+        elif choice == '3':
+            question = quiz_manager.get_practice_question()
+            if not question:
+                print("No active questions available. Please generate or enable some.")
+                continue
+
+            if isinstance(question, MCQQuestion):
+                print(f"\nMCQ QUESTION: {question.text}")
+                print(f"Options: {', '.join(question.options)}")
+                user_ans = input("Your choice: ")
+                is_correct = quiz_manager.evaluate_mcq(question, user_ans)
+            else:
+                user_ans = ui.get_freeform_answer(question.text)
+                response = quiz_manager.evaluate_freeform_with_llm(question, user_ans)
+                print(f"\nAI {response}")
+                is_correct = quiz_manager.is_llm_judgment_correct(response)
+
+            print("Correct!" if is_correct else f"Incorrect. Reference: {question.correct_answer}")
+            quiz_manager.update_question_stats(question, is_correct)
+
+        elif choice == '4':
+            active_qs = quiz_manager.get_active_questions()
+            if not active_qs:
+                print("No active questions available.")
+                continue
+
+            size = ui.get_test_size_input(len(active_qs))
+            test_qs = quiz_manager.get_test_questions(size)
+            score = 0
+
+            for q in test_qs:
+                if isinstance(q, MCQQuestion):
+                    print(f"\nMCQ: {q.text}\nOptions: {', '.join(q.options)}")
+                    ans = input("Answer: ")
+                    correct = quiz_manager.evaluate_mcq(q, ans)
+                else:
+                    ans = ui.get_freeform_answer(q.text)
+                    resp = quiz_manager.evaluate_freeform_with_llm(q, ans)
+                    correct = quiz_manager.is_llm_judgment_correct(resp)
+
+                if correct: score += 1
+                quiz_manager.update_question_stats(q, correct)
+
+            ui.display_test_results(score, size)
+            repository.log_test_result(score, size)
+
+        elif choice == '5':
+            q_id = ui.get_question_id_input()
+            question = quiz_manager.find_question_by_id(q_id)
+            if question and ui.confirm_status_change(question):
+                quiz_manager.toggle_question_status(q_id)
+                quiz_manager.save_changes()
+            elif not question:
+                ui.show_not_found(q_id)
+
+        elif choice == '6':
+            print("Goodbye!")
+            sys.exit()
 
 
 if __name__ == "__main__":
