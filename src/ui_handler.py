@@ -50,6 +50,12 @@ class UIHandler:
         return choice == 'y'
 
     @staticmethod
+    def get_freeform_answer(question_text: str) -> str:
+        """Present a freeform question and capture user's text input."""
+        print(f"\nQUESTION: {question_text}")
+        return input("Your Answer: ").strip()
+
+    @staticmethod
     def get_topic_input() -> str:
         """Prompt the user for a study topic."""
         return input("\nEnter the topic you want to study: ").strip()
