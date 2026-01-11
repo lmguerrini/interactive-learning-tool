@@ -1,5 +1,6 @@
 from typing import List, Optional
 from src.models import Question
+import random
 from src.repository import QuestionRepository
 
 
@@ -34,3 +35,16 @@ class QuizManager:
     def save_changes(self) -> None:
         """Persist the current state of questions to the storage."""
         self.repository.save_all(self.questions)
+
+    def get_practice_question(self) -> Optional[Question]:
+        """Select a question based on success rate (weighted random choice)."""
+        active_qs = self.get_active_questions()
+        if not active_qs:
+            return None
+
+        # Weights: lower success rate = higher probability of selection
+        # We use (101 - success_rate) so even a 100% success rate has a small weight (1)
+        weights = [(101 - q.success_rate) for q in active_qs]
+        
+        selected_list = random.choices(active_qs, weights=weights, k=1) # One question at a time
+        return selected_list[0]
