@@ -91,3 +91,16 @@ class UIHandler:
                   f"{q.times_shown:<6} | {q.success_rate:>6.1f}% | {q.text[:40]}...")
         
         print("="*115 + "\n")
+
+    @staticmethod
+    def get_test_size_input(max_size: int) -> int:
+        """Prompt the user for the number of questions for the test."""
+        while True:
+            try:
+                user_input = input(f"\nHow many questions for this test? (Max {max_size}): ")
+                size = int(user_input)
+                if 1 <= size <= max_size:
+                    return size
+                print(f"Please enter a number between 1 and {max_size}.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
