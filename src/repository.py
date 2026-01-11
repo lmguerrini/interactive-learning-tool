@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 from typing import List, Dict, Any
 from src.models import MCQQuestion, FreeformQuestion, Question, QuestionType
 
@@ -60,3 +61,13 @@ class QuestionRepository:
                     **item_copy
                 ))
         return questions
+
+    @staticmethod
+    def log_test_result(score: int, total: int) -> None:
+        """Append the test result with Timestamp to results.txt."""
+        log_path = "data/results.txt"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"{timestamp} - Score: {score}/{total}\n"
+        
+        with open(log_path, "a", encoding="utf-8") as f: # Append Mode
+            f.write(log_entry)
