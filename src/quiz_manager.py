@@ -2,15 +2,16 @@ from typing import List, Optional
 from src.models import Question
 import random
 from src.repository import QuestionRepository
+from src.llm_client import LLMClient
 
 
 class QuizManager:
     """Manages the business logic for quiz operations and question management."""
 
-    def __init__(self, repository: QuestionRepository) -> None:
-        """Initialize with a repository for data persistence."""
+    def __init__(self, repository: QuestionRepository, llm_client: Optional[LLMClient] = None) -> None:
+        """Initialize with a repository and an optional LLM client for evaluation."""
         self.repository = repository
-        # Load questions into memory at startup
+        self.llm_client = llm_client
         self.questions: List[Question] = self.repository.load_all()
 
     def find_question_by_id(self, question_id: str) -> Optional[Question]:
@@ -48,3 +49,22 @@ class QuizManager:
         
         selected_list = random.choices(active_qs, weights=weights, k=1) # One question at a time
         return selected_list[0]
+
+    def evaluate_freeform_with_llm(self, question: Question, user_answer: str) -> str:
+        """Use the LLM to judge if a freeform answer is correct based on the reference."""
+        if not self.llm_client:
+            return "Error: LLM client not initialized."
+
+        system_instruction = (
+            "You are a strict but fair evaluator. Compare the user's answer with the reference answer. "
+            "Decide if the user's answer is correct, even if phrased differently. "
+            "Format your response exactly like this: 'Judgment: [Correct/Incorrect] | Explanation: [Short explanation]'"
+        )
+
+        prompt = (
+            f"Question: {question.text}\n"
+            f"Reference Answer: {question.correct_answer}\n"
+            f"User's Answer: {user_answer}"
+        )
+
+        return self.llm_client.generate_response(prompt, system_instruction)
