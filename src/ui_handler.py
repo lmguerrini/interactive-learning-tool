@@ -104,3 +104,14 @@ class UIHandler:
                 print(f"Please enter a number between 1 and {max_size}.")
             except ValueError:
                 print("Invalid input. Please enter a number.")
+
+    @staticmethod
+    def display_test_results(score: int, total: int) -> None:
+        """Present the final test score to the user."""
+        print("\n" + "="*30)
+        print("      TEST COMPLETED")
+        print("="*30)
+        print(f"You answered {score} out of {total} questions correctly.")
+        percentage = (score / total) * 100 if total > 0 else 0
+        print(f"Final Score: {percentage:.1f}%")
+        print("="*30 + "\n")
