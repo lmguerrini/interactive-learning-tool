@@ -86,3 +86,10 @@ class QuizManager:
         if is_correct:
             question.correct_count += 1
         self.save_changes()
+
+    def get_test_questions(self, size: int) -> List[Question]:
+        """Select a random subset of active questions without repetition."""
+        active_qs = self.get_active_questions()
+        # Ensure we don't try to sample more than available
+        sample_size = min(size, len(active_qs))
+        return random.sample(active_qs, sample_size)
