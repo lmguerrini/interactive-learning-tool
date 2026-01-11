@@ -37,6 +37,19 @@ class UIHandler:
         return accepted_questions
 
     @staticmethod
+    def confirm_status_change(question: Question) -> bool:
+        """Show question details and ask for confirmation before toggling status."""
+        print("\n--- Question Details ---")
+        print(f"ID: {question.id}")
+        print(f"Current Status: {'Active' if question.is_active else 'Disabled'}")
+        print(f"Text: {question.text}")
+        print(f"Answer: {question.correct_answer}")
+        
+        new_status = "disable" if question.is_active else "enable"
+        choice = input(f"\nAre you sure you want to {new_status} this question? [y/N]: ").lower()
+        return choice == 'y'
+
+    @staticmethod
     def get_topic_input() -> str:
         """Prompt the user for a study topic."""
         return input("\nEnter the topic you want to study: ").strip()
