@@ -26,3 +26,7 @@ class QuizManager:
             question.is_active = not question.is_active
             return True
         return False
+
+    def save_changes(self) -> None:
+        """Persist the current state of questions to the storage."""
+        self.repository.save_all(self.questions)
