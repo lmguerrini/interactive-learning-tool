@@ -27,6 +27,10 @@ class QuizManager:
             return True
         return False
 
+    def get_active_questions(self) -> List[Question]:
+        """Return a list of all currently enabled questions."""
+        return [q for q in self.questions if q.is_active]
+
     def save_changes(self) -> None:
         """Persist the current state of questions to the storage."""
         self.repository.save_all(self.questions)
