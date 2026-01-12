@@ -5,3 +5,4 @@ mypy
 loguru
 pydantic
 pydantic-settings
+rich

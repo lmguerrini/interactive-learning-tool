@@ -3,18 +3,19 @@ from src.models import MCQQuestion, FreeformQuestion
 
 
 def test_convert_to_domain_models() -> None:
-    """Test that LLM Pydantic models are correctly converted to domain objects."""
-    # Arrange: Create sample Pydantic models as if returned by LLMClient
+    """Test that LLM models are correctly converted to domain objects."""
     llm_qs = [
         LLMQuestion(type="multiple_choice", text="Q1", correct_answer="A", options=["A", "B"]),
         LLMQuestion(type="freeform", text="Q2", correct_answer="Ans")
     ]
-
-    # Act
+    
     questions = QuestionGenerator._convert_to_domain_models(llm_qs, "TestTopic")
-
-    # Assert
+    
     assert len(questions) == 2
-    assert isinstance(questions[0], MCQQuestion)
-    assert isinstance(questions[1], FreeformQuestion)
-    assert questions[1].topic == "TestTopic"
+    mcq_q = questions[0]
+    assert isinstance(mcq_q, MCQQuestion)
+    assert mcq_q.options == ["A", "B"]
+    
+    free_q = questions[1]
+    assert isinstance(free_q, FreeformQuestion)
+    assert free_q.topic == "TestTopic"
