@@ -107,3 +107,6 @@ Design decisions deliberately prioritize explicit data models, type safety, and 
 The project maintains a high-quality test suite using `pytest` and `unittest.mock`:
 - **Isolation**: Business logic is tested independently of the OpenAI API and the file system.
 - **Coverage**: Includes validation for weighted selection algorithms, JSON serialization integrity, and Pydantic model transformations.
+
+## Previous Work
+**Previous hands-on project repository**: [Link to Repository](https://github.com/lmguerrini/dnd-game)
