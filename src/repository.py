@@ -1,16 +1,17 @@
 import json
 import os
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from src.models import MCQQuestion, FreeformQuestion, Question, QuestionType
+from src.config import settings
 
 
 class QuestionRepository:
     """Handles persistence of questions to and from a JSON file."""
 
-    def __init__(self, file_path: str = "data/questions.json") -> None:
-        """Initialize the repository with a specific file path."""
-        self.file_path: str = file_path
+    def __init__(self, file_path: Optional[str] = None) -> None:
+        """Initialize the repository using settings if no path is provided."""
+        self.file_path: str = file_path or settings.questions_file
         self._ensure_file_exists()
 
     def _ensure_file_exists(self) -> None:
@@ -64,8 +65,8 @@ class QuestionRepository:
 
     @staticmethod
     def log_test_result(score: int, total: int) -> None:
-        """Append the test result with Timestamp to results.txt."""
-        log_path = "data/results.txt"
+        """Append the test result with Timestamp using centralized settings."""
+        log_path = settings.results_file
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_entry = f"{timestamp} - Score: {score}/{total}\n"
         
