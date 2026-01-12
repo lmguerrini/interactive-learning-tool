@@ -3,6 +3,7 @@ from typing import Optional, List, cast
 from openai import OpenAI, APIError, RateLimitError, APIConnectionError, AuthenticationError, BadRequestError
 from openai.types.chat import ChatCompletionMessageParam
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
 
@@ -16,8 +17,9 @@ class LLMClient:
         self.api_key: str = openai_api_key or ""
 
         if not self.api_key:
+            logger.error("OpenAI API Key is missing.")
             raise ValueError("OpenAI API Key not found. Please set it in the .env file.")
-
+        
         self.client: OpenAI = OpenAI(api_key=self.api_key)
 
     def generate_response(self, prompt: str, system_instruction: str = "You are a helpful assistant.") -> str:
@@ -46,19 +48,17 @@ class LLMClient:
                 messages=messages,
                 temperature=0.7
             )
-
-            content = response.choices[0].message.content
-            return content if content else ""
-
+            return response.choices[0].message.content or ""
+            
         except AuthenticationError:
-            return "Error: Invalid OpenAI API Key. Please check your credentials."
+            logger.error("Authentication failed: Invalid API Key.")
+            return "Error: Invalid API Key."
         except RateLimitError:
-            return "Error: API rate limit exceeded. Please try again later."
+            logger.warning("API rate limit exceeded.")
+            return "Error: Rate limit exceeded."
         except APIConnectionError:
-            return "Error: Could not connect to the API. Check your internet connection."
-        except BadRequestError as e:
-            return f"Error: Invalid request sent to the API: {e}"
-        except APIError as e:
-            return f"Error: An unexpected API error occurred: {e}"
+            logger.error("Network error: Could not connect to OpenAI.")
+            return "Error: Connection failed."
         except Exception as e:
-            return f"Error: An unexpected error occurred: {e}"
+            logger.exception("An unexpected error occurred during LLM call.")
+            return f"Error: {e}"
