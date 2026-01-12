@@ -3,6 +3,7 @@ from src.models import Question, MCQQuestion
 import random
 from src.repository import QuestionRepository
 from src.llm_client import LLMClient
+from src.prompts import ANSWER_EVALUATION_SYSTEM_PROMPT
 
 
 class QuizManager:
@@ -51,15 +52,9 @@ class QuizManager:
         return selected_list[0]
 
     def evaluate_freeform_with_llm(self, question: Question, user_answer: str) -> str:
-        """Use the LLM to judge if a freeform answer is correct based on the reference."""
+        """Use the LLM to judge if a freeform answer is correct using externalized prompts."""
         if not self.llm_client:
             return "Error: LLM client not initialized."
-
-        system_instruction = (
-            "You are a strict but fair evaluator. Compare the user's answer with the reference answer. "
-            "Decide if the user's answer is correct, even if phrased differently. "
-            "Format your response exactly like this: 'Judgment: [Correct/Incorrect] | Explanation: [Short explanation]'"
-        )
 
         prompt = (
             f"Question: {question.text}\n"
@@ -67,7 +62,7 @@ class QuizManager:
             f"User's Answer: {user_answer}"
         )
 
-        return self.llm_client.generate_response(prompt, system_instruction)
+        return self.llm_client.generate_response(prompt, ANSWER_EVALUATION_SYSTEM_PROMPT)
 
     @staticmethod
     def is_llm_judgment_correct(llm_response: str) -> bool:
