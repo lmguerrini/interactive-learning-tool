@@ -38,11 +38,11 @@ def test_get_test_questions_no_repetition() -> None:
     # Check for uniqueness by comparing length with set of IDs
     assert len(set(q.id for q in test_qs)) == 5
 
+
 def test_evaluate_mcq_logic() -> None:
     """Test that MCQ evaluation is case-insensitive and robust."""
     q = MCQQuestion("1", "T", "Q", "Paris", options=["Paris", "London"])
     manager = QuizManager(MagicMock())
-    
+
     assert manager.evaluate_mcq(q, "paris ") is True
     assert manager.evaluate_mcq(q, "London") is False
-

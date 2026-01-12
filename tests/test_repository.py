@@ -15,13 +15,13 @@ def test_save_and_load_questions(tmp_path) -> None:
         topic="Python",
         text="What is a list?",
         correct_answer="A sequence",
-        options=["A sequence", "A number"]
+        options=["A sequence", "A number"],
     )
     freeform = FreeformQuestion(
         question_id="2",
         topic="Python",
         text="Explain PEP 8",
-        correct_answer="Style guide"
+        correct_answer="Style guide",
     )
 
     # Action: Save and then Load

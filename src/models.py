@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 
 class QuestionType(Enum):
     """Enumeration for different types of questions."""
+
     MCQ = "multiple_choice"
     FREEFORM = "freeform"
 
@@ -21,7 +22,7 @@ class Question(ABC):
         is_active: bool = True,
         times_shown: int = 0,
         correct_count: int = 0,
-        source: str = "LLM"
+        source: str = "LLM",
     ) -> None:
         """Initialize a new question instance."""
         self.id: str = question_id
@@ -50,7 +51,7 @@ class Question(ABC):
             "is_active": self.is_active,
             "times_shown": self.times_shown,
             "correct_count": self.correct_count,
-            "source": self.source
+            "source": self.source,
         }
 
 
@@ -74,10 +75,7 @@ class MCQQuestion(Question):
     def to_dict(self) -> Dict[str, Any]:
         """Convert MCQ question to dictionary including options."""
         data = super().to_dict()
-        data.update({
-            "type": self.type.value,
-            "options": self.options
-        })
+        data.update({"type": self.type.value, "options": self.options})
         return data
 
 

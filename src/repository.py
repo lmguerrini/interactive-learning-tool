@@ -45,22 +45,26 @@ class QuestionRepository:
 
             if q_type == QuestionType.MCQ.value:
                 options = item_copy.pop("options", [])
-                questions.append(MCQQuestion(
-                    question_id=item_copy.pop("id"),
-                    topic=item_copy.pop("topic"),
-                    text=item_copy.pop("text"),
-                    correct_answer=item_copy.pop("correct_answer"),
-                    options=options,
-                    **item_copy
-                ))
+                questions.append(
+                    MCQQuestion(
+                        question_id=item_copy.pop("id"),
+                        topic=item_copy.pop("topic"),
+                        text=item_copy.pop("text"),
+                        correct_answer=item_copy.pop("correct_answer"),
+                        options=options,
+                        **item_copy,
+                    )
+                )
             elif q_type == QuestionType.FREEFORM.value:
-                questions.append(FreeformQuestion(
-                    question_id=item_copy.pop("id"),
-                    topic=item_copy.pop("topic"),
-                    text=item_copy.pop("text"),
-                    correct_answer=item_copy.pop("correct_answer"),
-                    **item_copy
-                ))
+                questions.append(
+                    FreeformQuestion(
+                        question_id=item_copy.pop("id"),
+                        topic=item_copy.pop("topic"),
+                        text=item_copy.pop("text"),
+                        correct_answer=item_copy.pop("correct_answer"),
+                        **item_copy,
+                    )
+                )
         return questions
 
     @staticmethod
@@ -69,6 +73,6 @@ class QuestionRepository:
         log_path = settings.results_file
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_entry = f"{timestamp} - Score: {score}/{total}\n"
-        
-        with open(log_path, "a", encoding="utf-8") as f: # Append Mode
+
+        with open(log_path, "a", encoding="utf-8") as f:  # Append Mode
             f.write(log_entry)

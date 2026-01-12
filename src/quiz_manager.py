@@ -7,15 +7,24 @@ from src.repository import QuestionRepository
 from src.llm_client import LLMClient
 from src.prompts import ANSWER_EVALUATION_SYSTEM_PROMPT
 
+
 class LLMEvaluation(BaseModel):
     """Schema for AI-based answer evaluation."""
-    is_correct: bool = Field(description="True if the user answer is correct, False otherwise")
-    explanation: str = Field(description="A brief explanation of why the answer is correct or not")
+
+    is_correct: bool = Field(
+        description="True if the user answer is correct, False otherwise"
+    )
+    explanation: str = Field(
+        description="A brief explanation of why the answer is correct or not"
+    )
+
 
 class QuizManager:
     """Manages the business logic for quiz operations and question management."""
 
-    def __init__(self, repository: QuestionRepository, llm_client: Optional[LLMClient] = None) -> None:
+    def __init__(
+        self, repository: QuestionRepository, llm_client: Optional[LLMClient] = None
+    ) -> None:
         """Initialize with a repository and an optional LLM client for evaluation."""
         self.repository = repository
         self.llm_client = llm_client
@@ -53,11 +62,15 @@ class QuizManager:
         # Weights: lower success rate = higher probability of selection
         # We use (101 - success_rate) so even a 100% success rate has a small weight (1)
         weights = [(101 - q.success_rate) for q in active_qs]
-        
-        selected_list = random.choices(active_qs, weights=weights, k=1) # One question at a time
+
+        selected_list = random.choices(
+            active_qs, weights=weights, k=1
+        )  # One question at a time
         return selected_list[0]
 
-    def evaluate_freeform_with_llm(self, question: Question, user_answer: str) -> Optional[LLMEvaluation]:
+    def evaluate_freeform_with_llm(
+        self, question: Question, user_answer: str
+    ) -> Optional[LLMEvaluation]:
         """Use the LLM to judge a freeform answer using structured output."""
         if not self.llm_client:
             logger.error("LLM client not initialized in QuizManager.")
@@ -70,9 +83,7 @@ class QuizManager:
         )
 
         return self.llm_client.generate_structured_response(
-            prompt,
-            LLMEvaluation,
-            ANSWER_EVALUATION_SYSTEM_PROMPT
+            prompt, LLMEvaluation, ANSWER_EVALUATION_SYSTEM_PROMPT
         )
 
     @staticmethod
@@ -82,7 +93,7 @@ class QuizManager:
 
     def update_question_stats(self, question: Question, is_correct: bool) -> None:
         """Update the statistics for a specific question and persist changes."""
-        question.times_shown += 1 # Every time the user answers
+        question.times_shown += 1  # Every time the user answers
         if is_correct:
             question.correct_count += 1
         self.save_changes()
