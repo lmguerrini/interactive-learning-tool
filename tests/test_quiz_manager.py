@@ -46,11 +46,3 @@ def test_evaluate_mcq_logic() -> None:
     assert manager.evaluate_mcq(q, "paris ") is True
     assert manager.evaluate_mcq(q, "London") is False
 
-def test_is_llm_judgment_correct_parsing() -> None:
-    """Test that the parser correctly identifies 'Correct' from LLM string."""
-    manager = QuizManager(MagicMock())
-    
-    # Test different possible AI response styles
-    assert manager.is_llm_judgment_correct("Judgment: Correct | Explanation: Good job") is True
-    assert manager.is_llm_judgment_correct("JUDGMENT: CORRECT") is True
-    assert manager.is_llm_judgment_correct("The answer is incorrect because...") is False

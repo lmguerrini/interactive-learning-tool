@@ -1,10 +1,11 @@
 from typing import List, Optional
-from src.models import Question, MCQQuestion
 import random
+from loguru import logger
+from pydantic import BaseModel, Field
+from src.models import Question, MCQQuestion
 from src.repository import QuestionRepository
 from src.llm_client import LLMClient
 from src.prompts import ANSWER_EVALUATION_SYSTEM_PROMPT
-from pydantic import BaseModel, Field
 
 class LLMEvaluation(BaseModel):
     """Schema for AI-based answer evaluation."""
@@ -59,6 +60,7 @@ class QuizManager:
     def evaluate_freeform_with_llm(self, question: Question, user_answer: str) -> Optional[LLMEvaluation]:
         """Use the LLM to judge a freeform answer using structured output."""
         if not self.llm_client:
+            logger.error("LLM client not initialized in QuizManager.")
             return None
 
         prompt = (
@@ -72,12 +74,6 @@ class QuizManager:
             LLMEvaluation,
             ANSWER_EVALUATION_SYSTEM_PROMPT
         )
-
-    @staticmethod
-    def is_llm_judgment_correct(llm_response: str) -> bool:
-        """Parse the LLM response to determine the final judgment."""
-        # Simple string check: looking for 'Judgment: Correct' in the response
-        return "judgment: correct" in llm_response.lower()
 
     @staticmethod
     def evaluate_mcq(question: MCQQuestion, user_choice: str) -> bool:

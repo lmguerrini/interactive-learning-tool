@@ -6,6 +6,18 @@ class UIHandler:
     """Handles terminal-based user interactions."""
 
     @staticmethod
+    def ask_question(question: Question) -> str:
+        """Present a question (MCQ or Freeform) and capture the user's answer."""
+        print(f"\nTOPIC: {question.topic}")
+        print(f"QUESTION: {question.text}")
+        
+        if isinstance(question, MCQQuestion):
+            print(f"OPTIONS: {', '.join(question.options)}")
+            return input("Your Choice: ").strip()
+        
+        return input("Your Answer: ").strip()
+
+    @staticmethod
     def validate_generated_questions(questions: List[Question]) -> List[Question]:
         """Allow the user to accept, reject, or modify generated questions."""
         accepted_questions: List[Question] = []

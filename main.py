@@ -48,13 +48,11 @@ def main() -> None:
                 print("No active questions available. Please generate or enable some.")
                 continue
 
+            user_ans = ui.ask_question(question)
+            
             if isinstance(question, MCQQuestion):
-                print(f"\nMCQ QUESTION: {question.text}")
-                print(f"Options: {', '.join(question.options)}")
-                user_ans = input("Your choice: ")
                 is_correct = quiz_manager.evaluate_mcq(question, user_ans)
             else:
-                user_ans = ui.get_freeform_answer(question.text)
                 evaluation = quiz_manager.evaluate_freeform_with_llm(question, user_ans)
                 
                 if evaluation:
@@ -79,20 +77,18 @@ def main() -> None:
             score = 0
 
             for q in test_qs:
+                user_ans = ui.ask_question(q)
                 if isinstance(q, MCQQuestion):
-                    print(f"\nMCQ: {q.text}\nOptions: {', '.join(q.options)}")
-                    ans = input("Answer: ")
-                    correct = quiz_manager.evaluate_mcq(q, ans)
+                    correct = quiz_manager.evaluate_mcq(q, user_ans)
                 else:
-                    ans = ui.get_freeform_answer(q.text)
-                    evaluation = quiz_manager.evaluate_freeform_with_llm(q, ans)
+                    evaluation = quiz_manager.evaluate_freeform_with_llm(q, user_ans)
                     
                     if evaluation:
-                        print(f"\nAI Judgment: {'Correct' if evaluation.is_correct else 'Incorrect'}")
+                        print(f"AI Judgment: {'Correct' if evaluation.is_correct else 'Incorrect'}")
                         print(f"AI Explanation: {evaluation.explanation}")
                         correct = evaluation.is_correct
                     else:
-                        print("\nAI evaluation failed. Using manual fallback.")
+                        print("AI evaluation failed. Marking as incorrect.")
                         correct = False
 
                 if correct: score += 1
