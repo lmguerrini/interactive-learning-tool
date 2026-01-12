@@ -1,27 +1,30 @@
-import os
-from typing import Optional, List, cast
-from openai import OpenAI, APIError, RateLimitError, APIConnectionError, AuthenticationError, BadRequestError
-from openai.types.chat import ChatCompletionMessageParam
-from dotenv import load_dotenv
+from typing import Optional, List, cast, Type, TypeVar
 from loguru import logger
+from openai import OpenAI, APIError, RateLimitError, APIConnectionError, AuthenticationError
+from openai.types.chat import ChatCompletionMessageParam
+from pydantic import BaseModel
 from src.config import settings
 
-load_dotenv()
-
+T = TypeVar("T", bound=BaseModel)
 
 class LLMClient:
-    """Client for interacting with the OpenAI API."""
+    """Client for interacting with the OpenAI API using structured outputs."""
 
     def __init__(self) -> None:
         """Initialize the OpenAI client using centralized settings."""
         if not settings.openai_api_key:
             logger.error("OpenAI API Key is missing in settings.")
             raise ValueError("OpenAI API Key not found.")
-
+        
         self.client: OpenAI = OpenAI(api_key=settings.openai_api_key)
 
-    def generate_response(self, prompt: str, system_instruction: str = "You are a helpful assistant.") -> str:
-        """Send a prompt to the LLM and return the string response."""
+    def generate_structured_response(
+        self, 
+        prompt: str, 
+        response_model: Type[T], 
+        system_instruction: str = "You are a helpful assistant."
+    ) -> Optional[T]:
+        """Send a prompt and get a response parsed into a Pydantic model."""
         try:
             # Explicit cast required for static typing: OpenAI message params are TypedDict unions
             messages: List[ChatCompletionMessageParam] = [
@@ -40,23 +43,23 @@ class LLMClient:
                     }),
                 ),
             ]
-
-            response = self.client.chat.completions.create(
-                model=settings.llm_model,  # Dynamic model selection
+            
+            completion = self.client.beta.chat.completions.parse(
+                model=settings.llm_model,
                 messages=messages,
-                temperature=0.7
+                response_format=response_model,
             )
-            return response.choices[0].message.content or ""
-
+            
+            return completion.choices[0].message.parsed
+            
         except AuthenticationError:
             logger.error("Authentication failed: Invalid API Key.")
-            return "Error: Invalid API Key."
         except RateLimitError:
-            logger.warning("API rate limit exceeded.")
-            return "Error: Rate limit exceeded."
-        except APIConnectionError:
-            logger.error("Network error: Could not connect to OpenAI.")
-            return "Error: Connection failed."
+            logger.warning("API rate limit reached.")
+        except (APIConnectionError, APIError) as e:
+            logger.error(f"OpenAI API communication error: {e}")
         except Exception as e:
-            logger.exception("An unexpected error occurred during LLM call.")
-            return f"Error: {e}"
+            # logger.exception captures the full stack trace for generic errors
+            logger.exception(f"Unexpected error during structured output: {e}")
+        
+        return None

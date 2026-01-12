@@ -4,7 +4,12 @@ import random
 from src.repository import QuestionRepository
 from src.llm_client import LLMClient
 from src.prompts import ANSWER_EVALUATION_SYSTEM_PROMPT
+from pydantic import BaseModel, Field
 
+class LLMEvaluation(BaseModel):
+    """Schema for AI-based answer evaluation."""
+    is_correct: bool = Field(description="True if the user answer is correct, False otherwise")
+    explanation: str = Field(description="A brief explanation of why the answer is correct or not")
 
 class QuizManager:
     """Manages the business logic for quiz operations and question management."""
@@ -51,10 +56,10 @@ class QuizManager:
         selected_list = random.choices(active_qs, weights=weights, k=1) # One question at a time
         return selected_list[0]
 
-    def evaluate_freeform_with_llm(self, question: Question, user_answer: str) -> str:
-        """Use the LLM to judge if a freeform answer is correct using externalized prompts."""
+    def evaluate_freeform_with_llm(self, question: Question, user_answer: str) -> Optional[LLMEvaluation]:
+        """Use the LLM to judge a freeform answer using structured output."""
         if not self.llm_client:
-            return "Error: LLM client not initialized."
+            return None
 
         prompt = (
             f"Question: {question.text}\n"
@@ -62,7 +67,11 @@ class QuizManager:
             f"User's Answer: {user_answer}"
         )
 
-        return self.llm_client.generate_response(prompt, ANSWER_EVALUATION_SYSTEM_PROMPT)
+        return self.llm_client.generate_structured_response(
+            prompt,
+            LLMEvaluation,
+            ANSWER_EVALUATION_SYSTEM_PROMPT
+        )
 
     @staticmethod
     def is_llm_judgment_correct(llm_response: str) -> bool:

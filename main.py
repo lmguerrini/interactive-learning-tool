@@ -55,9 +55,15 @@ def main() -> None:
                 is_correct = quiz_manager.evaluate_mcq(question, user_ans)
             else:
                 user_ans = ui.get_freeform_answer(question.text)
-                response = quiz_manager.evaluate_freeform_with_llm(question, user_ans)
-                print(f"\nAI {response}")
-                is_correct = quiz_manager.is_llm_judgment_correct(response)
+                evaluation = quiz_manager.evaluate_freeform_with_llm(question, user_ans)
+                
+                if evaluation:
+                    print(f"\nAI Judgment: {'Correct' if evaluation.is_correct else 'Incorrect'}")
+                    print(f"AI Explanation: {evaluation.explanation}")
+                    is_correct = evaluation.is_correct
+                else:
+                    print("\nAI evaluation failed. Using manual fallback.")
+                    is_correct = False
 
             print("Correct!" if is_correct else f"Incorrect. Reference: {question.correct_answer}")
             quiz_manager.update_question_stats(question, is_correct)
@@ -79,8 +85,15 @@ def main() -> None:
                     correct = quiz_manager.evaluate_mcq(q, ans)
                 else:
                     ans = ui.get_freeform_answer(q.text)
-                    resp = quiz_manager.evaluate_freeform_with_llm(q, ans)
-                    correct = quiz_manager.is_llm_judgment_correct(resp)
+                    evaluation = quiz_manager.evaluate_freeform_with_llm(q, ans)
+                    
+                    if evaluation:
+                        print(f"\nAI Judgment: {'Correct' if evaluation.is_correct else 'Incorrect'}")
+                        print(f"AI Explanation: {evaluation.explanation}")
+                        correct = evaluation.is_correct
+                    else:
+                        print("\nAI evaluation failed. Using manual fallback.")
+                        correct = False
 
                 if correct: score += 1
                 quiz_manager.update_question_stats(q, correct)
