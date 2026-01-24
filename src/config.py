@@ -9,7 +9,10 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default=...)
     questions_file: str = "data/questions.json"
     results_file: str = "data/results.txt"
+
     llm_model: str = "gpt-4o"
+    llm_temperature: float = 0.2
+    llm_max_completion_tokens: int = 800
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

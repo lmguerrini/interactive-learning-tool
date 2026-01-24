@@ -61,6 +61,8 @@ class LLMClient:
                 model=settings.llm_model,
                 messages=messages,
                 response_format=response_model,
+                temperature=settings.llm_temperature,
+                max_completion_tokens=settings.llm_max_completion_tokens,
             )
 
             return completion.choices[0].message.parsed
