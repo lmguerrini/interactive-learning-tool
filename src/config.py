@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     llm_max_completion_tokens: int = 800
 
+    llm_max_retries: int = 2
+    llm_retry_max_backoff_seconds: float = 8.0
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
