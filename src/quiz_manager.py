@@ -5,7 +5,10 @@ from pydantic import BaseModel, Field
 from src.models import Question, MCQQuestion
 from src.repository import QuestionRepository
 from src.llm_client import LLMClient
-from src.prompts import ANSWER_EVALUATION_SYSTEM_PROMPT
+from src.prompts import (
+    ANSWER_EVALUATION_SYSTEM_PROMPT,
+    build_freeform_evaluation_user_prompt,
+)
 
 
 class LLMEvaluation(BaseModel):
@@ -76,10 +79,10 @@ class QuizManager:
             logger.error("LLM client not initialized in QuizManager.")
             return None
 
-        prompt = (
-            f"Question: {question.text}\n"
-            f"Reference Answer: {question.correct_answer}\n"
-            f"User's Answer: {user_answer}"
+        prompt = build_freeform_evaluation_user_prompt(
+            question_text=question.text,
+            reference_answer=question.correct_answer,
+            user_answer=user_answer,
         )
 
         return self.llm_client.generate_structured_response(

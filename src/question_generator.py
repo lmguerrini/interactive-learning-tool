@@ -2,7 +2,10 @@ import uuid
 from typing import List, Optional
 from src.llm_client import LLMClient
 from src.models import MCQQuestion, FreeformQuestion, Question, QuestionType
-from src.prompts import QUESTION_GENERATION_SYSTEM_PROMPT
+from src.prompts import (
+    QUESTION_GENERATION_SYSTEM_PROMPT,
+    build_question_generation_user_prompt,
+)
 from pydantic import BaseModel, Field
 
 
@@ -31,7 +34,7 @@ class QuestionGenerator:
 
     def generate_questions(self, topic: str, count: int = 5) -> List[Question]:
         """Generate validated questions using the structured response model."""
-        prompt = f"Generate {count} high-quality questions about '{topic}'. Include a mix of MCQ and freeform."
+        prompt = build_question_generation_user_prompt(topic=topic, count=count)
 
         parsed_data = self.llm_client.generate_structured_response(
             prompt, LLMQuestionList, QUESTION_GENERATION_SYSTEM_PROMPT
