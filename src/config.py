@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     llm_retry_max_backoff_seconds: float = 8.0
 
+    use_instructor: bool = False
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

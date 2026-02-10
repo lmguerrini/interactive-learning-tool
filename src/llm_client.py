@@ -1,4 +1,4 @@
-from typing import Optional, List, cast, Type, TypeVar
+from typing import Optional, List, cast, Type, TypeVar, Any
 import random
 import time
 from loguru import logger
@@ -13,6 +13,13 @@ from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 from src.config import settings
 
+try:
+    import instructor  # type: ignore
+
+    INSTRUCTOR_AVAILABLE = True
+except ImportError:
+    INSTRUCTOR_AVAILABLE = False
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -25,7 +32,20 @@ class LLMClient:
             logger.error("OpenAI API Key is missing in settings.")
             raise ValueError("OpenAI API Key not found.")
 
-        self.client: OpenAI = OpenAI(api_key=settings.openai_api_key)
+        base_client = OpenAI(api_key=settings.openai_api_key)
+
+        self.using_instructor = bool(settings.use_instructor and INSTRUCTOR_AVAILABLE)
+        if settings.use_instructor and not INSTRUCTOR_AVAILABLE:
+            logger.warning(
+                "USE_INSTRUCTOR is enabled but 'instructor' is not installed. "
+                "Falling back to OpenAI structured outputs."
+            )
+
+        self.client: Any = (
+            instructor.from_openai(base_client)
+            if self.using_instructor
+            else base_client
+        )
         self.last_latency_seconds: Optional[float] = None
 
     def generate_structured_response(
@@ -64,20 +84,30 @@ class LLMClient:
         for attempt in range(1, attempts + 1):
             start = time.perf_counter()
             try:
-                completion = self.client.beta.chat.completions.parse(
-                    model=settings.llm_model,
-                    messages=messages,
-                    response_format=response_model,
-                    temperature=settings.llm_temperature,
-                    max_completion_tokens=settings.llm_max_completion_tokens,
-                )
+                if self.using_instructor:
+                    parsed = self.client.chat.completions.create(
+                        model=settings.llm_model,
+                        messages=messages,
+                        response_model=response_model,
+                        temperature=settings.llm_temperature,
+                        max_completion_tokens=settings.llm_max_completion_tokens,
+                    )
+                else:
+                    completion = self.client.beta.chat.completions.parse(
+                        model=settings.llm_model,
+                        messages=messages,
+                        response_format=response_model,
+                        temperature=settings.llm_temperature,
+                        max_completion_tokens=settings.llm_max_completion_tokens,
+                    )
+                    parsed = completion.choices[0].message.parsed
 
                 self.last_latency_seconds = time.perf_counter() - start
                 logger.info(
                     f"LLM response received in {self.last_latency_seconds:.2f}s "
-                    f"(attempt {attempt}/{attempts})"
+                    f"(attempt {attempt}/{attempts}, instructor={self.using_instructor})"
                 )
-                return completion.choices[0].message.parsed
+                return parsed
 
             except AuthenticationError:
                 self.last_latency_seconds = time.perf_counter() - start
@@ -89,7 +119,6 @@ class LLMClient:
                 if attempt >= attempts:
                     logger.warning("API rate limit reached (no more retries).")
                     return None
-
                 self._sleep_before_retry(attempt, e)
 
             except (APIConnectionError, APIError) as e:
@@ -99,7 +128,6 @@ class LLMClient:
                         f"OpenAI API communication error (no more retries): {e}"
                     )
                     return None
-
                 self._sleep_before_retry(attempt, e)
 
             except Exception as e:
